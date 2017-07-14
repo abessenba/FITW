@@ -9,6 +9,8 @@
 ## with the name and term
 ## if puid already exists in the master PUID list
 ## it adds the term name to the list
+## a call to this function would look like this:
+## test <- addPUID("~/Office/DLC Database/DataFiles/FITW/Fall 2016/MA16010/Post/Book2test.csv",1, "Fall 2016")
 
 addPUID <- function(filepath, fullname, termName) {
   
@@ -27,8 +29,9 @@ addPUID <- function(filepath, fullname, termName) {
   currentFile <- read.csv(file=filepath, header=TRUE, sep=",")
   
   ## read in master PUID list for FITW project
-  puidmaster <- read.csv(file="~/Office/DLC Database/DataFiles/FITW/WWCPUIDList.csv", header=TRUE, sep=",")
-  
+  puidmaster <- read.csv(file="~/Office/DLC Database/DataFiles/FITW/TestWWCPD.csv", header=TRUE, sep=",", stringsAsFactors = FALSE)
+  puidmaster$Term.3 <- as.character(puidmaster$Term.3)
+  puidmaster$Term.4 <- as.character(puidmaster$Term.4)
   
   ## if the currentFile has the name stored as one filed split them into two
   if(fullname==1){
@@ -51,7 +54,7 @@ addPUID <- function(filepath, fullname, termName) {
       
     ## check next PUID from current file to see if it's in the puidmaster
     foundPUID <- select(puidmaster, PUID) %>% filter(PUID==PUIDCheck)
-      
+    
     ## if we didn't find a PUID match in the master file we need to add a new line to it
     if (is.na(foundPUID[1,1])){
   
@@ -69,21 +72,18 @@ addPUID <- function(filepath, fullname, termName) {
         foundId <- select(puidmaster, PUID) %>% filter(PUID==newId[1,1])
         if(is.na(foundId[1,1])) {break}
       }
-        
-      puidmaster <- rbind(puidmaster, ParticipantId=newId, PUID=PUIDCheck, 
-                            LastName=checkDataFrame[i,2], FirstName=checkDataFrame[i,3], 
-                            Term.3=termName)
-      print("adding New PUID")          
+      masteradd <- c(newId, PUIDCheck, checkDataFrame[i,2], checkDataFrame[i,3], 
+                     NA, NA, termName, NA)  
+      puidmaster <- rbind(puidmaster, masteradd)
    }else
     
     ## add the new term name for a participant that is already in the master file  
-    puidmaster$Term.3 <- termName 
+     puidmaster <- puidmaster %>%
+      mutate(Term.3=replace(Term.3, PUID==PUIDCheck, termName)) 
     
   }
   
-  
   return(puidmaster)
-  
   
 }
 
